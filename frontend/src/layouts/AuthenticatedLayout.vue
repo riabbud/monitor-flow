@@ -22,6 +22,7 @@
 
         <q-space />
 
+
         <!-- Company Selector -->
         <q-select
           v-model="authStore.selectedCompanyId"
@@ -161,135 +162,142 @@
       bordered
       class="sidebar-drawer"
     >
-      <q-list class="sidebar-list">
-        <!-- Dashboard -->
-        <q-item
-          v-if="authStore.hasPermission('dashboard')"
-          clickable
-          :to="{ name: 'Dashboard' }"
-          exact
-          class="sidebar-item"
-          active-class="sidebar-item-active"
-        >
-          <q-item-section avatar>
-            <q-icon name="analytics" />
-          </q-item-section>
-          <q-item-section>Dashboard</q-item-section>
-        </q-item>
-
-        <!-- Monitoramento -->
-        <q-item
-          v-if="authStore.hasPermission('monitoring')"
-          clickable
-          :to="{ name: 'Monitoring' }"
-          exact
-          class="sidebar-item"
-          active-class="sidebar-item-active"
-        >
-          <q-item-section avatar>
-            <q-icon name="dashboard" />
-          </q-item-section>
-          <q-item-section>Monitoramento</q-item-section>
-        </q-item>
-
-        <!-- Servidores -->
-        <q-item
-          v-if="authStore.hasPermission('servers')"
-          clickable
-          :to="{ name: 'Servers' }"
-          class="sidebar-item"
-          active-class="sidebar-item-active"
-        >
-          <q-item-section avatar>
-            <q-icon name="dns" />
-          </q-item-section>
-          <q-item-section>Servidores</q-item-section>
-        </q-item>
-
-        <!-- Tecnologias -->
-        <q-item
-          v-if="authStore.hasPermission('technologies')"
-          clickable
-          :to="{ name: 'Technologies' }"
-          class="sidebar-item"
-          active-class="sidebar-item-active"
-        >
-          <q-item-section avatar>
-            <q-icon name="code" />
-          </q-item-section>
-          <q-item-section>Tecnologias</q-item-section>
-        </q-item>
-
-        <!-- Sistemas -->
-        <q-item
-          v-if="authStore.hasPermission('applications')"
-          clickable
-          :to="{ name: 'Applications' }"
-          class="sidebar-item"
-          active-class="sidebar-item-active"
-        >
-          <q-item-section avatar>
-            <q-icon name="list_alt" />
-          </q-item-section>
-          <q-item-section>Sistemas</q-item-section>
-        </q-item>
-
-
-        <!-- Administração do Sistema (Dropdown) -->
-        <q-expansion-item
-          v-if="showAdminMenu"
-          v-model="adminMenuOpen"
-          icon="settings"
-          label="Administração"
-          class="sidebar-expansion"
-          :class="{ 'sidebar-expansion-active': isAdminRouteActive }"
-          header-class="sidebar-item"
-          expand-icon-class="expand-icon"
-          dense
-        >
-          <!-- Empresas -->
+      <div class="column full-height no-wrap">
+        <q-list class="sidebar-list col">
+          <!-- Dashboard -->
           <q-item
-            v-if="authStore.hasPermission('companies')"
+            v-if="authStore.hasPermission('dashboard')"
             clickable
-            :to="{ name: 'Companies' }"
-            class="sidebar-subitem"
+            :to="{ name: 'Dashboard' }"
+            exact
+            class="sidebar-item"
             active-class="sidebar-item-active"
           >
             <q-item-section avatar>
-              <q-icon name="business" size="20px" />
+              <q-icon name="analytics" />
             </q-item-section>
-            <q-item-section>Empresas</q-item-section>
+            <q-item-section>Dashboard</q-item-section>
           </q-item>
 
-          <!-- Perfis de Acesso -->
+          <!-- Monitoramento -->
           <q-item
-            v-if="authStore.hasPermission('accessProfiles')"
+            v-if="authStore.hasPermission('monitoring')"
             clickable
-            :to="{ name: 'AccessProfiles' }"
-            class="sidebar-subitem"
+            :to="{ name: 'Monitoring' }"
+            exact
+            class="sidebar-item"
             active-class="sidebar-item-active"
           >
             <q-item-section avatar>
-              <q-icon name="admin_panel_settings" size="20px" />
+              <q-icon name="dashboard" />
             </q-item-section>
-            <q-item-section>Perfis de Acesso</q-item-section>
+            <q-item-section>Monitoramento</q-item-section>
           </q-item>
 
-          <!-- Usuários -->
+          <!-- Servidores -->
           <q-item
-            v-if="authStore.hasPermission('users')"
+            v-if="authStore.hasPermission('servers')"
             clickable
-            :to="{ name: 'Users' }"
-            class="sidebar-subitem"
+            :to="{ name: 'Servers' }"
+            class="sidebar-item"
             active-class="sidebar-item-active"
           >
             <q-item-section avatar>
-              <q-icon name="people" size="20px" />
+              <q-icon name="dns" />
             </q-item-section>
-            <q-item-section>Usuários</q-item-section>
+            <q-item-section>Servidores</q-item-section>
           </q-item>
-        </q-expansion-item>
-      </q-list>
+
+          <!-- Tecnologias -->
+          <q-item
+            v-if="authStore.hasPermission('technologies')"
+            clickable
+            :to="{ name: 'Technologies' }"
+            class="sidebar-item"
+            active-class="sidebar-item-active"
+          >
+            <q-item-section avatar>
+              <q-icon name="code" />
+            </q-item-section>
+            <q-item-section>Tecnologias</q-item-section>
+          </q-item>
+
+          <!-- Sistemas -->
+          <q-item
+            v-if="authStore.hasPermission('applications')"
+            clickable
+            :to="{ name: 'Applications' }"
+            class="sidebar-item"
+            active-class="sidebar-item-active"
+          >
+            <q-item-section avatar>
+              <q-icon name="list_alt" />
+            </q-item-section>
+            <q-item-section>Sistemas</q-item-section>
+          </q-item>
+
+
+          <!-- Administração do Sistema (Dropdown) -->
+          <q-expansion-item
+            v-if="showAdminMenu"
+            v-model="adminMenuOpen"
+            icon="settings"
+            label="Administração"
+            class="sidebar-expansion"
+            :class="{ 'sidebar-expansion-active': isAdminRouteActive }"
+            header-class="sidebar-item"
+            expand-icon-class="expand-icon"
+            dense
+          >
+            <!-- Empresas -->
+            <q-item
+              v-if="authStore.hasPermission('companies')"
+              clickable
+              :to="{ name: 'Companies' }"
+              class="sidebar-subitem"
+              active-class="sidebar-item-active"
+            >
+              <q-item-section avatar>
+                <q-icon name="business" size="20px" />
+              </q-item-section>
+              <q-item-section>Empresas</q-item-section>
+            </q-item>
+
+            <!-- Perfis de Acesso -->
+            <q-item
+              v-if="authStore.hasPermission('accessProfiles')"
+              clickable
+              :to="{ name: 'AccessProfiles' }"
+              class="sidebar-subitem"
+              active-class="sidebar-item-active"
+            >
+              <q-item-section avatar>
+                <q-icon name="admin_panel_settings" size="20px" />
+              </q-item-section>
+              <q-item-section>Perfis de Acesso</q-item-section>
+            </q-item>
+
+            <!-- Usuários -->
+            <q-item
+              v-if="authStore.hasPermission('users')"
+              clickable
+              :to="{ name: 'Users' }"
+              class="sidebar-subitem"
+              active-class="sidebar-item-active"
+            >
+              <q-item-section avatar>
+                <q-icon name="people" size="20px" />
+              </q-item-section>
+              <q-item-section>Usuários</q-item-section>
+            </q-item>
+          </q-expansion-item>
+        </q-list>
+
+        <!-- Sidebar Footer -->
+        <div v-if="!drawerMini" class="sidebar-footer q-py-md text-center">
+          <div class="version-label text-grey-6">v{{ version }}</div>
+        </div>
+      </div>
 
 
     </q-drawer>
@@ -317,6 +325,9 @@ import { useServerStore } from '../stores/servers'
 import { useTechnologyStore } from '../stores/technologies'
 import { useThemeStore } from '../stores/theme'
 import { useCompanyStore } from '../stores/companies'
+import pkg from '../../package.json'
+
+const version = pkg.version
 
 const router = useRouter()
 const route = useRoute()
@@ -505,6 +516,13 @@ onUnmounted(() => {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: -0.5px;
+}
+
+.version-label {
+  font-size: 11px;
+  opacity: 0.4;
+  letter-spacing: 1px;
+  font-weight: 500;
 }
 
 .company-selector {
