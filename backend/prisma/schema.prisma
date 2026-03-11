@@ -1,0 +1,127 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  cnpj      String?  @unique
+  logo      String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users          User[]
+  accessProfiles AccessProfile[]
+
+  @@map("companies")
+}
+
+model AccessProfile {
+  id          String   @id @default(uuid()) @db.Uuid
+  companyId   String   @map("company_id") @db.Uuid
+  name        String
+  description String?
+  permissions Json     @default("{}") // { "dashboard": true, "monitoring": true, ... }
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  users   User[]
+
+  @@map("access_profiles")
+}
+
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String
+  email           String    @unique
+  password        String
+  isAdmin         Boolean   @default(false) @map("is_admin")
+  active          Boolean   @default(true)
+  companyId       String?   @map("company_id") @db.Uuid
+  accessProfileId String?   @map("access_profile_id") @db.Uuid
+  resetToken      String?   @map("reset_token")
+  resetExpires    DateTime? @map("reset_expires")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  company       Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  accessProfile AccessProfile? @relation(fields: [accessProfileId], references: [id], onDelete: SetNull)
+  applications  Application[]
+  servers       Server[]
+  technologies  Technology[]
+
+  @@map("users")
+}
+
+model Technology {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  name      String
+  type      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("technologies")
+}
+
+model Server {
+  id           String        @id @default(uuid()) @db.Uuid
+  userId       String        @map("user_id") @db.Uuid
+  name         String
+  accessAccount String?      @map("access_account")
+  ipAddress    String?       @map("ip_address")
+  description  String?
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@map("servers")
+}
+
+model Application {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  serverId     String?   @map("server_id") @db.Uuid
+  name         String
+  url          String
+  techStack    String    @map("tech_stack")
+  status       String    @default("offline")
+  lastChecked  DateTime? @map("last_checked")
+  responseTime Int?      @map("response_time")
+  checkInterval Int      @default(60) @map("check_interval")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  server       Server?   @relation(fields: [serverId], references: [id], onDelete: SetNull)
+  logs         ApplicationLog[]
+
+  @@map("applications")
+}
+
+model ApplicationLog {
+  id            String      @id @default(uuid()) @db.Uuid
+  applicationId String      @map("application_id") @db.Uuid
+  status        String
+  responseTime  Int?        @map("response_time")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("application_logs")
+}
