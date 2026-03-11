@@ -72,10 +72,11 @@
           </q-btn>
         </q-form>
 
-        <div class="auth-footer">
+        <div class="auth-footer column items-center">
           <router-link :to="{ name: 'ForgotPassword' }" class="text-link">
             Esqueceu a senha?
           </router-link>
+          <div class="system-version q-mt-sm">v{{ version }}</div>
         </div>
       </div>
     </div>
@@ -87,7 +88,9 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from '../stores/auth'
+import pkg from '../../package.json'
 
+const version = pkg.version
 const router = useRouter()
 const $q = useQuasar()
 const authStore = useAuthStore()
@@ -279,8 +282,12 @@ async function handleLogin() {
   margin-top: 24px;
   color: var(--color-text-secondary);
   font-size: 14px;
-  display: flex;
-  gap: 6px;
-  justify-content: center;
+}
+
+.system-version {
+  font-size: 11px;
+  opacity: 0.5;
+  letter-spacing: 0.5px;
+  font-weight: 500;
 }
 </style>
