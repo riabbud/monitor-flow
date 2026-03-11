@@ -33,3 +33,7 @@ Certifique-se de que o repositório remoto está configurado. Se não estiver, e
 11. Envia para o GitHub
 // turbo
 12. git push origin main
+
+13. Reconstrói e reinicia o sistema local (Docker)
+// turbo
+14. docker compose up -d --build frontend
