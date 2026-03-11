@@ -71,7 +71,8 @@ import { useQuasar } from 'quasar'
 
 const props = defineProps({
   modelValue: Boolean,
-  application: Object
+  application: Object,
+  targetLog: Object
 })
 
 defineEmits(['update:modelValue'])
@@ -93,14 +94,19 @@ const columns = [
 ]
 
 watch(() => props.modelValue, async (val) => {
-  if (val && props.application?.id) {
-    loading.value = true
-    try {
-      logs.value = await appStore.fetchLogs(props.application.id)
-    } catch (error) {
-      console.error('Error loading logs:', error)
-    } finally {
+  if (val) {
+    if (props.targetLog) {
+      logs.value = [props.targetLog]
       loading.value = false
+    } else if (props.application?.id) {
+      loading.value = true
+      try {
+        logs.value = await appStore.fetchLogs(props.application.id)
+      } catch (error) {
+        console.error('Error loading logs:', error)
+      } finally {
+        loading.value = false
+      }
     }
   }
 })

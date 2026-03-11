@@ -90,7 +90,8 @@ router.post(
             // Emit to socket for immediate feedback
             const io = req.app.get('io');
             if (io) {
-                io.to(req.user.id).emit('application:created', application);
+                const targetRoom = req.user.companyId ? `company:${req.user.companyId}` : req.user.id;
+                io.to(targetRoom).emit('application:created', application);
             }
 
             res.status(201).json(application);
@@ -142,7 +143,8 @@ router.put(
             // Emit update
             const io = req.app.get('io');
             if (io) {
-                io.to(req.user.id).emit('application:updated', application);
+                const targetRoom = req.user.companyId ? `company:${req.user.companyId}` : req.user.id;
+                io.to(targetRoom).emit('application:updated', application);
             }
 
             res.json(application);
@@ -208,7 +210,8 @@ router.delete('/:id', async (req, res) => {
         // Emit delete
         const io = req.app.get('io');
         if (io) {
-            io.to(req.user.id).emit('application:deleted', { id: req.params.id });
+            const targetRoom = req.user.companyId ? `company:${req.user.companyId}` : req.user.id;
+            io.to(targetRoom).emit('application:deleted', { id: req.params.id });
         }
 
         res.json({ message: 'Aplicação removida com sucesso.' });

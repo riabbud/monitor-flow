@@ -95,7 +95,7 @@ async function runMonitoringCycle() {
     try {
         const now = new Date();
         const applications = await prisma.application.findMany({
-            include: { user: { select: { id: true } } },
+            include: { user: { select: { id: true, companyId: true } } },
         });
 
         if (applications.length === 0) return;
@@ -135,18 +135,20 @@ async function runMonitoringCycle() {
 
             // Emit real-time update if status changed or on every check
             if (io) {
-                io.to(app.userId).emit('application:statusUpdate', updated);
+                const targetRoom = app.user?.companyId ? `company:${app.user.companyId}` : app.userId;
+                
+                io.to(targetRoom).emit('application:statusUpdate', updated);
 
                 // Emit special event on status change
                 if (oldStatus !== result.status) {
-                    io.to(app.userId).emit('application:statusChanged', {
+                    io.to(targetRoom).emit('application:statusChanged', {
                         id: app.id,
                         name: app.name,
                         oldStatus,
                         newStatus: result.status,
                     });
                     console.log(
-                        `[Monitor] ${app.name}: ${oldStatus} → ${result.status} (${result.responseTime}ms)`
+                        `[Monitor] ${app.name}: ${oldStatus} → ${result.status} (${result.responseTime}ms) - Broadcast to ${targetRoom}`
                     );
                 }
             }

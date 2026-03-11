@@ -46,12 +46,12 @@ router.post(
                     email,
                     password: hashedPassword,
                 },
-                select: { id: true, name: true, email: true },
+                select: { id: true, name: true, email: true, companyId: true },
             });
 
             // Generate JWT
             const token = jwt.sign(
-                { userId: user.id },
+                { userId: user.id, companyId: user.companyId },
                 process.env.JWT_SECRET,
                 { expiresIn: process.env.JWT_EXPIRES_IN }
             );
@@ -107,7 +107,7 @@ router.post(
 
             // Generate JWT
             const token = jwt.sign(
-                { userId: user.id },
+                { userId: user.id, companyId: user.companyId },
                 process.env.JWT_SECRET,
                 { expiresIn: process.env.JWT_EXPIRES_IN }
             );

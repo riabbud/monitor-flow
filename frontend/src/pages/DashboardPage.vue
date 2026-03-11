@@ -27,6 +27,21 @@
             </template>
           </q-input>
 
+          <q-select
+            v-model="selectedRefreshInterval"
+            :options="refreshIntervalOptions"
+            outlined
+            dense
+            emit-value
+            map-options
+            class="refresh-selector q-mr-sm"
+            style="min-width: 130px"
+          >
+            <template v-slot:prepend>
+              <q-icon name="update" color="primary" size="20px" />
+            </template>
+          </q-select>
+
           <q-btn
             class="add-btn"
             unelevated
@@ -122,7 +137,12 @@
                   <q-icon name="error_outline" color="red" size="20px" class="q-mr-sm" />
                   <span class="drop-app-name">{{ drop.application?.name }}</span>
                   <q-space />
-                  <span class="drop-time">{{ formatDate(drop.createdAt) }}</span>
+                  <div class="row items-center no-wrap">
+                    <q-btn flat round dense size="sm" icon="history" color="grey-7" @click="openDropLog(drop)" class="btn-history q-mr-xs">
+                      <q-tooltip>Ver Histórico</q-tooltip>
+                    </q-btn>
+                    <span class="drop-time">{{ formatDate(drop.createdAt) }}</span>
+                  </div>
                </div>
              </div>
            </div>
@@ -276,12 +296,13 @@
     <LogsModal
       v-model="showLogs"
       :application="selectedAppForLogs"
+      :targetLog="selectedTargetLog"
     />
   </q-page>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { useApplicationStore } from '../stores/applications'
 import ApplicationModal from '../components/ApplicationModal.vue'
@@ -295,6 +316,7 @@ const selectedApp = ref(null)
 
 const showLogs = ref(false)
 const selectedAppForLogs = ref(null)
+const selectedTargetLog = ref(null)
 
 const isDropsExpanded = ref(false)
 const search = ref('')
@@ -304,6 +326,21 @@ const activeFilters = ref({
   slow: false,
   offline: false
 })
+
+const selectedRefreshInterval = ref(30000) // Default 30 segundos
+const refreshIntervalOptions = [
+  { label: '30 Segundos', value: 30000 },
+  { label: '1 Minuto', value: 60000 },
+  { label: '2 Minutos', value: 120000 },
+  { label: '3 Minutos', value: 180000 },
+  { label: '4 Minutos', value: 240000 },
+  { label: '5 Minutos', value: 300000 },
+  { label: '10 Minutos', value: 600000 },
+  { label: '15 Minutos', value: 900000 },
+  { label: '30 Minutos', value: 1800000 },
+  { label: '45 Minutos', value: 2700000 },
+  { label: '60 Minutos', value: 3600000 }
+]
 
 function toggleFilter(filterName) {
   activeFilters.value[filterName] = !activeFilters.value[filterName]
@@ -363,6 +400,13 @@ const sortedApplications = computed(() => {
 
 function openLogs(app) {
   selectedAppForLogs.value = app
+  selectedTargetLog.value = null
+  showLogs.value = true
+}
+
+function openDropLog(drop) {
+  selectedAppForLogs.value = drop.application
+  selectedTargetLog.value = drop
   showLogs.value = true
 }
 
@@ -428,19 +472,29 @@ function formatDate(dateStr) {
   })
 }
 
-let refreshInterval = null
+let refreshIntervalTimer = null
+
+function setupRefreshInterval() {
+  if (refreshIntervalTimer) {
+    clearInterval(refreshIntervalTimer)
+  }
+  refreshIntervalTimer = setInterval(() => {
+    appStore.fetchApplications()
+  }, selectedRefreshInterval.value)
+}
+
+watch(selectedRefreshInterval, () => {
+  setupRefreshInterval()
+})
 
 onMounted(() => {
   appStore.fetchApplications()
-  
-  refreshInterval = setInterval(() => {
-    appStore.fetchApplications()
-  }, 60000) // 60 seconds
+  setupRefreshInterval()
 })
 
 onUnmounted(() => {
-  if (refreshInterval) {
-    clearInterval(refreshInterval)
+  if (refreshIntervalTimer) {
+    clearInterval(refreshIntervalTimer)
   }
 })
 </script>
@@ -499,6 +553,16 @@ onUnmounted(() => {
 .search-input-dashboard:focus-within {
   width: 450px;
   box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+}
+
+.refresh-selector {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-sm);
+}
+
+.refresh-selector :deep(.q-field__control) {
+  height: 40px;
+  min-height: 40px;
 }
 
 .gap-md {
@@ -991,6 +1055,15 @@ onUnmounted(() => {
 .drop-time {
   font-size: 12px;
   color: var(--color-text-secondary);
+}
+
+.btn-history {
+  transition: all 0.2s ease;
+}
+
+.btn-history:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea !important;
 }
 
 .gap-sm {

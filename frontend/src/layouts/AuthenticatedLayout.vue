@@ -64,6 +64,18 @@
           </template>
         </q-select>
 
+        <!-- Sound Toggle -->
+        <q-btn
+          flat
+          round
+          dense
+          class="theme-toggle-btn q-mr-sm"
+          @click="toggleSound"
+        >
+          <q-icon :name="appStore.isSoundEnabled ? 'notifications_active' : 'notifications_off'" size="22px" :color="appStore.isSoundEnabled ? 'amber-8' : 'grey-6'" />
+          <q-tooltip>{{ appStore.isSoundEnabled ? 'Desativar Sons' : 'Ativar Sons' }}</q-tooltip>
+        </q-btn>
+
         <!-- Status indicators -->
         <div class="status-badges q-mr-md">
           <q-badge class="status-badge online-badge q-mr-sm" rounded>
@@ -325,6 +337,7 @@ import { useServerStore } from '../stores/servers'
 import { useTechnologyStore } from '../stores/technologies'
 import { useThemeStore } from '../stores/theme'
 import { useCompanyStore } from '../stores/companies'
+import { getSocket } from '../services/socket'
 import pkg from '../../package.json'
 
 const version = pkg.version
@@ -389,11 +402,26 @@ function handleLogout() {
   router.push({ name: 'Login' })
 }
 
-function onCompanyChanged() {
+function toggleSound() {
+  appStore.isSoundEnabled = !appStore.isSoundEnabled
+  if (appStore.isSoundEnabled) {
+    appStore.initAudio()
+    appStore.playAlertSound() // Test sound
+  }
+}
+
+function onCompanyChanged(val, oldVal) {
   // Reload data when admin switches company
   appStore.fetchApplications()
   serverStore.fetchServers()
   technologyStore.fetchTechnologies()
+
+  // Update socket rooms
+  const socket = getSocket()
+  if (socket) {
+    if (oldVal) socket.emit('leave:company', oldVal)
+    if (val) socket.emit('join:company', val)
+  }
 }
 
 async function toggleFullscreen() {
@@ -439,6 +467,7 @@ function onFullscreenChange() {
 
 onMounted(async () => {
   authStore.fetchUser()
+  appStore.initAudio()
   appStore.fetchApplications()
   appStore.setupSocketListeners()
   serverStore.fetchServers()
@@ -458,6 +487,14 @@ onMounted(async () => {
   // If not admin, force selection to their company
   if (!authStore.isAdmin && authStore.user?.companyId) {
     authStore.selectedCompanyId = authStore.user.companyId
+  }
+
+  // Ensure socket joins current company room on mount
+  if (authStore.selectedCompanyId) {
+    const socket = getSocket()
+    if (socket) {
+      socket.emit('join:company', authStore.selectedCompanyId)
+    }
   }
 })
 

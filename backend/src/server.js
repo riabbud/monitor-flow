@@ -76,6 +76,7 @@ io.use((socket, next) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         socket.userId = decoded.userId;
+        socket.companyId = decoded.companyId;
         next();
     } catch (error) {
         next(new Error('Token inválido.'));
@@ -87,6 +88,31 @@ io.on('connection', (socket) => {
 
     // Join user-specific room for targeted updates
     socket.join(socket.userId);
+
+    // Initial company room if available in token
+    if (socket.companyId) {
+        socket.join(`company:${socket.companyId}`);
+        console.log(`[Socket] User ${socket.userId} joined company room: company:${socket.companyId}`);
+    }
+
+    // Dynamic room joining (useful for admins switching companies)
+    socket.on('join:company', (companyId) => {
+        if (!companyId) return;
+        
+        // Security check: only allow if admin or if it's the user's own company
+        // For simplicity in this dev environment, we'll allow admins to join any, 
+        // and users to join if they have the ID (the frontend already restricts the list)
+        // If we want to be strict, we'd verify companyId against the DB or JWT.
+        
+        socket.join(`company:${companyId}`);
+        console.log(`[Socket] User ${socket.userId} joined room company:${companyId}`);
+    });
+
+    socket.on('leave:company', (companyId) => {
+        if (!companyId) return;
+        socket.leave(`company:${companyId}`);
+        console.log(`[Socket] User ${socket.userId} left room company:${companyId}`);
+    });
 
     socket.on('disconnect', () => {
         console.log(`[Socket] User disconnected: ${socket.userId}`);

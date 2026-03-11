@@ -20,6 +20,78 @@ export const useApplicationStore = defineStore('applications', () => {
     const totalCount = computed(() => applications.value.length)
 
     const recentDrops = ref([])
+    let audioCtx = null
+    const isSoundEnabled = ref(true)
+
+    function initAudio() {
+        console.log('[Audio] Initializing AudioContext...');
+        try {
+            if (audioCtx) return
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+                audioCtx = new AudioContextClass();
+                console.log('[Audio] Context created, state:', audioCtx.state);
+                // Browsers often start in 'suspended' state
+                if (audioCtx.state === 'suspended') {
+                    const resume = () => {
+                        audioCtx.resume().then(() => {
+                            console.log('[Audio] Context resumed via user interaction');
+                            window.removeEventListener('click', resume);
+                            window.removeEventListener('keydown', resume);
+                        });
+                    };
+                    window.addEventListener('click', resume);
+                    window.addEventListener('keydown', resume);
+                }
+            }
+        } catch (e) {
+            console.error('[Audio] Error initializing context:', e);
+        }
+    }
+
+    function playAlertSound() {
+        console.log('[Audio] playAlertSound triggered, enabled:', isSoundEnabled.value);
+        if (!isSoundEnabled.value) return;
+
+        try {
+            if (!audioCtx) initAudio();
+            if (!audioCtx) return;
+
+            console.log('[Audio] Context state:', audioCtx.state);
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            // Play a series of beeps for a more "alarm" feel
+            const playBeep = (time, freq, duration) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.type = 'sine'; // Sine is cleaner than square
+                osc.frequency.setValueAtTime(freq, time);
+                osc.frequency.exponentialRampToValueAtTime(freq / 2, time + duration);
+
+                gain.gain.setValueAtTime(0, time);
+                gain.gain.linearRampToValueAtTime(0.2, time + 0.05);
+                gain.gain.linearRampToValueAtTime(0, time + duration);
+
+                osc.start(time);
+                osc.stop(time + duration);
+            };
+
+            const now = audioCtx.currentTime;
+            // Three descending beeps
+            playBeep(now, 880, 0.4);
+            playBeep(now + 0.5, 880, 0.4);
+            playBeep(now + 1.0, 440, 0.6);
+
+        } catch (e) {
+            console.error('[Audio] Error playing sound:', e);
+        }
+    }
 
     async function fetchApplications() {
         loading.value = true
@@ -82,37 +154,6 @@ export const useApplicationStore = defineStore('applications', () => {
             }
         })
 
-        function playAlertSound() {
-            try {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (!AudioContext) return;
-
-                const audioCtx = new AudioContext();
-
-                // Play 2 short beeps
-                for (let i = 0; i < 2; i++) {
-                    const osc = audioCtx.createOscillator();
-                    const gainNode = audioCtx.createGain();
-
-                    osc.connect(gainNode);
-                    gainNode.connect(audioCtx.destination);
-
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(300, audioCtx.currentTime + i * 0.2);
-                    osc.frequency.linearRampToValueAtTime(200, audioCtx.currentTime + i * 0.2 + 0.1);
-
-                    gainNode.gain.setValueAtTime(0, audioCtx.currentTime + i * 0.2);
-                    gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + i * 0.2 + 0.05);
-                    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + i * 0.2 + 0.15);
-
-                    osc.start(audioCtx.currentTime + i * 0.2);
-                    osc.stop(audioCtx.currentTime + i * 0.2 + 0.15);
-                }
-            } catch (e) {
-                console.error('Autoplay prevented or error playing sound:', e);
-            }
-        }
-
         socket.on('application:statusChanged', ({ newStatus }) => {
             if (newStatus === 'offline') {
                 fetchRecentDrops()
@@ -147,6 +188,9 @@ export const useApplicationStore = defineStore('applications', () => {
         slowCount,
         totalCount,
         recentDrops,
+        isSoundEnabled,
+        initAudio,
+        playAlertSound,
         fetchApplications,
         fetchRecentDrops,
         createApplication,
